@@ -1,0 +1,7 @@
+{
+  "name": "Rewallet",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
