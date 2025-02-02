@@ -36,7 +36,6 @@ const schema = a.schema({
     defaultHoldPeriod: a.integer().required(),
     notificationsEnabled: a.boolean().required(),
     smsNotifications: a.boolean().required(),
-    userId: a.id(),
     user: a.belongsTo('User', 'userId')
   }).authorization((allow) => allow.ownerDefinedIn('user')),
 
@@ -54,7 +53,6 @@ const schema = a.schema({
     description: a.string(),
     icon: a.string(),
     purchases: a.hasMany('Purchase', 'customCategoryId'),
-    userId: a.id(),
     user: a.belongsTo('User', 'userId')
   }).authorization((allow) => allow.ownerDefinedIn('user')),
 
@@ -67,7 +65,6 @@ const schema = a.schema({
     currency: a.string().required(),
     status: a.ref('CartStatusType'),
     purchases: a.hasMany('Purchase', 'cartId'),
-    userId: a.id(),
     user: a.belongsTo('User', 'userId')
   }).authorization((allow) => allow.ownerDefinedIn('user')),
 
@@ -81,14 +78,10 @@ const schema = a.schema({
     imageUrl: a.string(),
     createdAt: a.datetime().required(),
     updatedAt: a.datetime().required(),
-    cartId: a.id(),
     cart: a.belongsTo('Cart', 'cartId'),
-    userId: a.id(),
     user: a.belongsTo('User', 'userId'),
     status: a.ref('PurchaseStatusType').required(),
-    categoryId: a.id(),
     category: a.belongsTo('Category', 'categoryId'),
-    customCategoryId: a.id(),
     customCategory: a.belongsTo('CustomCategory', 'customCategoryId'),
     paymentHolds: a.hasMany('PaymentHold', 'purchaseId'),
   }).authorization((allow) => allow.ownerDefinedIn('user')),
@@ -101,7 +94,6 @@ const schema = a.schema({
     expiryYear: a.integer(),
     isDefault: a.boolean(),
     stripePaymentMethodId: a.string().required(),
-    userId: a.id(),
     user: a.belongsTo('User', 'userId'),
     paymentHolds: a.hasMany('PaymentHold', 'paymentMethodId'),
   }).authorization((allow) => allow.ownerDefinedIn('user')),
@@ -114,9 +106,7 @@ const schema = a.schema({
     createdAt: a.datetime().required(),
     updatedAt: a.datetime().required(),
     releaseDate: a.datetime(),
-    purchaseId: a.id(),
     purchase: a.belongsTo('Purchase', 'purchaseId'),
-    paymentMethodId: a.id(),
     paymentMethod: a.belongsTo('PaymentMethod', 'paymentMethodId')
   }).authorization((allow) => allow.owner()),
 });
