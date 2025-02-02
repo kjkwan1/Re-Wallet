@@ -10,7 +10,7 @@ const schema = a.schema({
   CartStatusType: a.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']),
   PurchaseStatusType: a.enum(['PENDING', 'HELD', 'COMPLETED', 'REFUNDED', 'CANCELLED']),
   PaymentMethodType: a.enum(['CREDIT_CARD', 'DEBIT_CARD', 'BANK_ACCOUNT']),
-  PaymentHoldStatus: a.enum(['ACTIVE', 'RELEASED', 'CONVERTED', 'FAILED']),
+  PaymentHoldStatusType: a.enum(['ACTIVE', 'RELEASED', 'CONVERTED', 'FAILED']),
   Role: a.enum(['USER', 'ADMIN', 'SUPPORT']),
 
   User: a.model({
@@ -22,6 +22,7 @@ const schema = a.schema({
     createdAt: a.datetime().required(),
     updatedAt: a.datetime().required(),
     role: a.ref('Role').required(),
+    preferences: a.hasOne('Preference', 'userId'),
     customCategories: a.hasMany('CustomCategory', 'userId'),
     carts: a.hasMany('Cart', 'userId'),
     purchases: a.hasMany('Purchase', 'userId'),
@@ -35,6 +36,7 @@ const schema = a.schema({
     defaultHoldPeriod: a.integer().required(),
     notificationsEnabled: a.boolean().required(),
     smsNotifications: a.boolean().required(),
+    userId: a.id(),
     user: a.belongsTo('User', 'userId')
   }).authorization((allow) => allow.ownerDefinedIn('user')),
 
@@ -52,7 +54,8 @@ const schema = a.schema({
     description: a.string(),
     icon: a.string(),
     purchases: a.hasMany('Purchase', 'customCategoryId'),
-    user: a.belongsTo('User', 'userId').authorization(({ owner }) => owner())
+    userId: a.id(),
+    user: a.belongsTo('User', 'userId')
   }).authorization((allow) => allow.ownerDefinedIn('user')),
 
   Cart: a.model({
@@ -62,17 +65,11 @@ const schema = a.schema({
     confirmationDay: a.datetime(),
     total: a.float().required(),
     currency: a.string().required(),
-    status: a.hasOne('CartStatus', 'cartId'),
+    status: a.ref('CartStatusType'),
     purchases: a.hasMany('Purchase', 'cartId'),
-    user: a.belongsTo('User', 'userId').authorization(({ owner }) => owner())
+    userId: a.id(),
+    user: a.belongsTo('User', 'userId')
   }).authorization((allow) => allow.ownerDefinedIn('user')),
-
-  CartStatus: a.model({
-    id: a.id().required(),
-    type: a.ref('CartStatusType').required(),
-    cart: a.belongsTo('Cart', 'cartId'),
-    updatedAt: a.datetime().required()
-  }).authorization((allow) => allow.owner()),
 
   Purchase: a.model({
     id: a.id().required(),
@@ -84,10 +81,14 @@ const schema = a.schema({
     imageUrl: a.string(),
     createdAt: a.datetime().required(),
     updatedAt: a.datetime().required(),
+    cartId: a.id(),
     cart: a.belongsTo('Cart', 'cartId'),
-    user: a.belongsTo('User', 'userId').authorization(({ owner }) => owner()),
+    userId: a.id(),
+    user: a.belongsTo('User', 'userId'),
     status: a.ref('PurchaseStatusType').required(),
+    categoryId: a.id(),
     category: a.belongsTo('Category', 'categoryId'),
+    customCategoryId: a.id(),
     customCategory: a.belongsTo('CustomCategory', 'customCategoryId'),
     paymentHolds: a.hasMany('PaymentHold', 'purchaseId'),
   }).authorization((allow) => allow.ownerDefinedIn('user')),
@@ -100,19 +101,22 @@ const schema = a.schema({
     expiryYear: a.integer(),
     isDefault: a.boolean(),
     stripePaymentMethodId: a.string().required(),
-    user: a.belongsTo('User', 'userId').authorization(({ owner }) => owner()),
-    paymentHolds: a.hasMany('PaymentHold', 'paymentMethodId')
+    userId: a.id(),
+    user: a.belongsTo('User', 'userId'),
+    paymentHolds: a.hasMany('PaymentHold', 'paymentMethodId'),
   }).authorization((allow) => allow.ownerDefinedIn('user')),
 
   PaymentHold: a.model({
     id: a.id().required(),
     currency: a.string().required(),
-    status: a.ref('PaymentHoldStatus').required(),
+    status: a.ref('PaymentHoldStatusType').required(),
     stripeHoldId: a.string().required(),
     createdAt: a.datetime().required(),
     updatedAt: a.datetime().required(),
     releaseDate: a.datetime(),
+    purchaseId: a.id(),
     purchase: a.belongsTo('Purchase', 'purchaseId'),
+    paymentMethodId: a.id(),
     paymentMethod: a.belongsTo('PaymentMethod', 'paymentMethodId')
   }).authorization((allow) => allow.owner()),
 });
