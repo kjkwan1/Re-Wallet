@@ -25,6 +25,11 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
+/* Global CSS */
+@import url("./theme/variables.scss");
+@import url("./theme/custom.scss");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap');
+
 /**
  * Ionic Dark Mode
  * -----------------------------------------------------

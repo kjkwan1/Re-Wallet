@@ -1,0 +1,1 @@
+export type NavigationRoutes = 'home' | 'auth' | 'login' | 'register';
