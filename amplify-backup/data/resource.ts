@@ -10,24 +10,27 @@ const schema = a.schema({
   CartStatusType: a.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']),
   PurchaseStatusType: a.enum(['PENDING', 'HELD', 'COMPLETED', 'REFUNDED', 'CANCELLED']),
   PaymentMethodType: a.enum(['CREDIT_CARD', 'DEBIT_CARD', 'BANK_ACCOUNT']),
-  PaymentHoldStatus: a.enum(['ACTIVE', 'RELEASED', 'CONVERTED', 'FAILED']),
-  Role: a.enum(['USER', 'ADMIN', 'SUPPORT']),
-
+  PaymentHoldStatu: a.enum(['ACTIVE', 'RELEASED', 'CONVERTED', 'FAILED']),
   User: a.model({
     id: a.id().required(),
-    email: a.email().required(),
+    email: a.email().required().default(),
     firstName: a.string().required(),
     lastName: a.string().required(),
     phoneNumber: a.string().required(),
     createdAt: a.datetime().required(),
     updatedAt: a.datetime().required(),
-    role: a.ref('Role').required(),
-    customCategories: a.hasMany('CustomCategory', 'userId'),
-    carts: a.hasMany('Cart', 'userId'),
-    purchases: a.hasMany('Purchase', 'userId'),
-    paymentMethods: a.hasMany('PaymentMethod', 'userId')
-  }).authorization((allow) => allow.owner()),
-
+    role: a.belongsTo('Role', 'id'),
+    customCategories: a.hasMany('CustomCategory', 'id'),
+    carts: a.hasMany('Cart', 'id'),
+    purchases: a.hasMany('Purchase', 'id'),
+    paymentMethods: a.hasMany('PaymentMethod', 'id')
+  }),
+  Role: a.model({
+    id: a.id().required(),
+    name: a.string().required(),
+    permissions: a.string().array().required(),
+    user: a.belongsTo('User', 'id')
+  }),
   Preference: a.model({
     id: a.id().required(),
     theme: a.string().required(),
@@ -35,26 +38,23 @@ const schema = a.schema({
     defaultHoldPeriod: a.integer().required(),
     notificationsEnabled: a.boolean().required(),
     smsNotifications: a.boolean().required(),
-    user: a.belongsTo('User', 'userId')
-  }).authorization((allow) => allow.ownerDefinedIn('user')),
-
+    user: a.belongsTo('User', 'id')
+  }),
   Category: a.model({
     id: a.id().required(),
     name: a.string().required(),
     description: a.string(),
     icon: a.string(),
-    purchases: a.hasMany('Purchase', 'categoryId'),
-  }).authorization((allow) => allow.owner()),
-
+    purchases: a.hasMany('Purchase', 'id'),
+  }),
   CustomCategory: a.model({
     id: a.id().required(),
     name: a.string().required(),
     description: a.string(),
     icon: a.string(),
-    purchases: a.hasMany('Purchase', 'customCategoryId'),
-    user: a.belongsTo('User', 'userId').authorization(({ owner }) => owner())
-  }).authorization((allow) => allow.ownerDefinedIn('user')),
-
+    purchases: a.hasMany('Purchase', 'id'),
+    user: a.belongsTo('User', 'id').authorization(({ owner }) => owner())
+  }).authorization((allow) => allow.owner()),
   Cart: a.model({
     id: a.id().required(),
     createdAt: a.datetime().required(),
@@ -62,18 +62,16 @@ const schema = a.schema({
     confirmationDay: a.datetime(),
     total: a.float().required(),
     currency: a.string().required(),
-    status: a.hasOne('CartStatus', 'cartId'),
-    purchases: a.hasMany('Purchase', 'cartId'),
-    user: a.belongsTo('User', 'userId').authorization(({ owner }) => owner())
-  }).authorization((allow) => allow.ownerDefinedIn('user')),
-
+    status: a.belongsTo('CartStatus', 'id'),
+    purchases: a.hasMany('Purchase', 'id'),
+    user: a.belongsTo('User', 'id').authorization(({ owner }) => owner())
+  }),
   CartStatus: a.model({
     id: a.id().required(),
     type: a.ref('CartStatusType').required(),
-    cart: a.belongsTo('Cart', 'cartId'),
+    cart: a.belongsTo('Cart', 'id'),
     updatedAt: a.datetime().required()
-  }).authorization((allow) => allow.owner()),
-
+  }),
   Purchase: a.model({
     id: a.id().required(),
     description: a.string(),
@@ -84,14 +82,19 @@ const schema = a.schema({
     imageUrl: a.string(),
     createdAt: a.datetime().required(),
     updatedAt: a.datetime().required(),
-    cart: a.belongsTo('Cart', 'cartId'),
-    user: a.belongsTo('User', 'userId').authorization(({ owner }) => owner()),
-    status: a.ref('PurchaseStatusType').required(),
-    category: a.belongsTo('Category', 'categoryId'),
-    customCategory: a.belongsTo('CustomCategory', 'customCategoryId'),
-    paymentHolds: a.hasMany('PaymentHold', 'purchaseId'),
-  }).authorization((allow) => allow.ownerDefinedIn('user')),
-
+    cart: a.belongsTo('Cart', 'id'),
+    user: a.belongsTo('User', 'id').authorization(({ owner }) => owner()),
+    status: a.belongsTo('PurchaseStatus', 'id'),
+    category: a.belongsTo('Category', 'id'),
+    customCategory: a.belongsTo('CustomCategory', 'id'),
+    paymentHolds: a.hasMany('PaymentHold', 'id'),
+  }),
+  PurchaseStatus: a.model({
+    id: a.id().required(),
+    purchase: a.belongsTo('Purchase', 'id'),
+    updatedAt: a.datetime().required(),
+    user: a.belongsTo('User', 'id').authorization(({ owner }) => owner())
+  }),
   PaymentMethod: a.model({
     id: a.id().required(),
     type: a.ref('PaymentMethodType').required(),
@@ -100,10 +103,9 @@ const schema = a.schema({
     expiryYear: a.integer(),
     isDefault: a.boolean(),
     stripePaymentMethodId: a.string().required(),
-    user: a.belongsTo('User', 'userId').authorization(({ owner }) => owner()),
-    paymentHolds: a.hasMany('PaymentHold', 'paymentMethodId')
-  }).authorization((allow) => allow.ownerDefinedIn('user')),
-
+    user: a.belongsTo('User', 'id').authorization(({ owner }) => owner()),
+    paymentHolds: a.hasMany('PaymentHold', 'id')
+  }),
   PaymentHold: a.model({
     id: a.id().required(),
     currency: a.string().required(),
@@ -112,9 +114,9 @@ const schema = a.schema({
     createdAt: a.datetime().required(),
     updatedAt: a.datetime().required(),
     releaseDate: a.datetime(),
-    purchase: a.belongsTo('Purchase', 'purchaseId'),
-    paymentMethod: a.belongsTo('PaymentMethod', 'paymentMethodId')
-  }).authorization((allow) => allow.owner()),
+    purchase: a.belongsTo('Purchase', 'id'),
+    paymentMethod: a.belongsTo('PaymentMethod', 'id')
+  }),
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -130,7 +132,7 @@ Go to your frontend source code. From your client-side code, generate a
 Data client to make CRUDL requests to your table. (THIS SNIPPET WILL ONLY
 WORK IN THE FRONTEND CODE FILE.)
 
-Using JavaScript or Next.js React Server Components, Middleware, Server
+Using JavaScript or Next.js React Server Components, Middleware, Server 
 Actions or Pages Router? Review how to generate Data clients for those use
 cases: https://docs.amplify.aws/gen2/build-a-backend/data/connect-to-API/
 =========================================================================*/
