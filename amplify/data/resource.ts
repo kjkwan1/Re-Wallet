@@ -36,9 +36,9 @@ const schema = a.schema({
     defaultHoldPeriod: a.integer().required(),
     notificationsEnabled: a.boolean().required(),
     smsNotifications: a.boolean().required(),
-    userId: a.string().required(),
+    userId: a.id().required(),
     user: a.belongsTo('User', 'userId')
-  }).authorization((allow) => allow.ownerDefinedIn('user')),
+  }).authorization((allow) => allow.ownerDefinedIn('userId')),
 
   // Category: a.model({
   //   id: a.id().required(),
